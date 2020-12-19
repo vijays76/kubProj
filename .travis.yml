@@ -1,0 +1,24 @@
+sudo: required
+services:
+- docker
+env:
+  global:
+  - docker_registry_name:  saidamo  # change here
+before_install:
+- curl -O https://releases.hashicorp.com/terraform/0.12.18/terraform_0.12.18_linux_amd64.zip
+- sudo unzip terraform_0.12.18_linux_amd64.zip -d /usr/local/bin/
+- rm terraform_0.12.18_linux_amd64.zip
+- sudo chmod +x /usr/local/bin/terraform
+- pip install ansible --user
+- chmod 0400 key/auth_key
+- echo "$docker_password" | docker login -u "$docker_username" --password-stdin
+- docker build -t "$docker_registry_name"/appserver -f ./images/Dockerfile ./images
+script:
+- terraform --version
+- curl --version
+- ansible --version
+- docker push "$docker_registry_name"/appserver:latest
+- terraform init
+- terraform apply -auto-approve
+- sleep 300
+- terraform destroy -auto-approve 
